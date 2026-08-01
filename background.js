@@ -7,12 +7,14 @@
   } catch (e) { return; }
   if (!OBR || !OBR.isAvailable) return;
 
+  const BASE = "https://jonedasdasd.github.io/Ficha-de-D-d/";
+
   OBR.onReady(() => {
     OBR.contextMenu.create({
       id: "com.jonesdnd.ficha/menu-ficha",
       icons: [
         {
-          icon: "icon.svg",
+          icon: BASE + "icon.svg",
           label: "🧙 Ficha de Personagem",
           filter: { max: 1 }
         }
@@ -21,7 +23,7 @@
         const id = context.items[0].id;
         OBR.popover.open({
           id: "com.jonesdnd.ficha/popover-ficha",
-          url: "ficha.html?item=" + encodeURIComponent(id),
+          url: BASE + "ficha.html?item=" + encodeURIComponent(id),
           width: 520,
           height: 680,
           anchorElementId: elementId

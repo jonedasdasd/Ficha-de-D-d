@@ -1,16 +1,16 @@
 {
   "name": "Ficha D&D 2024",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "manifest_version": 1,
   "description": "Criação de personagens de D&D 5e (2024) ligada aos tokens do mapa, com painel do mestre",
   "author": "Jones",
-  "icon": "icon.svg",
+  "icon": "https://jonedasdasd.github.io/Ficha-de-D-d/icon.svg",
   "action": {
     "title": "Painel do Mestre",
-    "icon": "icon.svg",
-    "popover": "mestre.html",
+    "icon": "https://jonedasdasd.github.io/Ficha-de-D-d/icon.svg",
+    "popover": "https://jonedasdasd.github.io/Ficha-de-D-d/mestre.html",
     "width": 460,
     "height": 700
   },
-  "background_url": "background.html"
+  "background_url": "https://jonedasdasd.github.io/Ficha-de-D-d/background.html"
 }
