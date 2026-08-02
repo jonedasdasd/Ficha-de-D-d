@@ -126,11 +126,11 @@ function viewMestre(){
       <span>${p.nome||'(sem nome)'} <span class="small">— ${p.especie||'?'} ${p.classe||'?'}${p.subclasseNota?' ('+p.subclasseNota+')':''}${condTxt}</span></span>
       <b style="display:flex;align-items:center;gap:8px">
         <span style="color:${corPv}">PV ${pv}/${pvMax||'?'}</span>
-        <button class="ghost" onclick="mestreAjustarPV('${idEsc}', -5)" title="-5">-5</button>
-        <button class="ghost" onclick="mestreAjustarPV('${idEsc}', -1)" title="-1">-1</button>
-        <button class="ghost" onclick="mestreAjustarPV('${idEsc}', 1)" title="+1">+1</button>
-        <button class="ghost" onclick="mestreAjustarPV('${idEsc}', 5)" title="+5">+5</button>
-        <button class="ghost" onclick="mestreDesvincular('${idEsc}')" title="Remover a ficha desse token">✕</button>
+        <button class="ghost" data-onclick="mestreAjustarPV('${idEsc}', -5)" title="-5">-5</button>
+        <button class="ghost" data-onclick="mestreAjustarPV('${idEsc}', -1)" title="-1">-1</button>
+        <button class="ghost" data-onclick="mestreAjustarPV('${idEsc}', 1)" title="+1">+1</button>
+        <button class="ghost" data-onclick="mestreAjustarPV('${idEsc}', 5)" title="+5">+5</button>
+        <button class="ghost" data-onclick="mestreDesvincular('${idEsc}')" title="Remover a ficha desse token">✕</button>
       </b></div>`;
   }).join('')
     || '<p class="small">Nenhum personagem ainda. Peça pros jogadores selecionarem o token deles no mapa e abrirem "🧙 Ficha de Personagem" no menu do token — assim que criarem, aparece aqui sozinho.</p>';
@@ -155,24 +155,24 @@ function viewMestre(){
       return `<div class="kv" style="opacity:${morto?0.5:1}">
         <span>${m.membros.length>1? (m.nome+' #'+(idx+1)) : m.nome}${morto?' 💀':''}</span>
         <b style="display:flex;align-items:center;gap:8px">PV ${mb.pvAtual}/${mb.pvMax}
-          <button class="ghost" onclick="monstroAjustarPV('${m.id}',${idx},-5)">-5</button>
-          <button class="ghost" onclick="monstroAjustarPV('${m.id}',${idx},-1)">-1</button>
-          <button class="ghost" onclick="monstroAjustarPV('${m.id}',${idx},1)">+1</button>
+          <button class="ghost" data-onclick="monstroAjustarPV('${m.id}',${idx},-5)">-5</button>
+          <button class="ghost" data-onclick="monstroAjustarPV('${m.id}',${idx},-1)">-1</button>
+          <button class="ghost" data-onclick="monstroAjustarPV('${m.id}',${idx},1)">+1</button>
         </b></div>`;
     }).join('');
     return `<div class="panel" style="margin-top:10px">
       <div class="row" style="justify-content:space-between;align-items:center">
         <b>${m.nome} ${m.membros.length>1?`(${vivos}/${m.membros.length} vivos)`:''}</b>
-        <button class="ghost" onclick="removeMonstro('${m.id}')">✕ remover</button>
+        <button class="ghost" data-onclick="removeMonstro('${m.id}')">✕ remover</button>
       </div>
       ${m.danoAtaque? `<div class="small row" style="align-items:center;gap:8px">Dano por ataque: ${m.danoAtaque}
-        <button class="ghost dice-btn" onclick="rollExpr('${m.danoAtaque.replace(/'/g,"\\'")}','monDano_${m.id}')">🎲 rolar dano</button>
+        <button class="ghost dice-btn" data-onclick="rollExpr('${m.danoAtaque.replace(/'/g,"\\'")}','monDano_${m.id}')">🎲 rolar dano</button>
         <span id="monDano_${m.id}" class="dice-res"></span></div>` : ''}
       ${membrosHtml}
       ${m.membros.length>1? `<div class="row" style="margin-top:6px">
         <span class="small" style="align-self:center">Aplicar em todos:</span>
-        <button class="ghost" onclick="monstroAplicarTodos('${m.id}',-5)">-5 todos</button>
-        <button class="ghost" onclick="monstroAplicarTodos('${m.id}',-1)">-1 todos</button>
+        <button class="ghost" data-onclick="monstroAplicarTodos('${m.id}',-5)">-5 todos</button>
+        <button class="ghost" data-onclick="monstroAplicarTodos('${m.id}',-1)">-1 todos</button>
       </div>` : ''}
     </div>`;
   }).join('') || '<p class="small">Nenhum monstro criado ainda.</p>';
@@ -191,7 +191,7 @@ function viewMestre(){
       <input id="monQtd" type="number" min="1" value="1" placeholder="Qtd" style="max-width:70px">
       <input id="monPv" type="number" min="1" placeholder="PV de cada" style="max-width:110px">
       <input id="monDano" placeholder="Dano por ataque (ex: 1d6+2)" style="max-width:180px">
-      <button class="action" onclick="addMonstro()">+ Adicionar</button>
+      <button class="action" data-onclick="addMonstro()">+ Adicionar</button>
     </div>
     ${monRows}
 
@@ -219,7 +219,7 @@ function viewMestre(){
       <div class="row" style="align-items:center;gap:8px">
         <label style="margin:0">Modificador</label>
         <input id="mestreD20Mod" type="number" value="0" style="max-width:80px">
-        <button class="ghost dice-btn" onclick="mestreRolarD20()">🎲 Rolar d20</button>
+        <button class="ghost dice-btn" data-onclick="mestreRolarD20()">🎲 Rolar d20</button>
         <span id="mestreD20Res" class="dice-res"></span>
       </div>
     </details>

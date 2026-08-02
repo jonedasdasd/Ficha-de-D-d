@@ -39,7 +39,7 @@ function renderStepNav(){
   nav.innerHTML = STEP_NAMES.map((n,i)=>{
     const s=i+1;
     let cls='step-btn'+(s===state.step?' active':'')+(s<state.step?' done':'');
-    return `<button class="${cls}" onclick="goStep(${s})">${s}. ${n}</button>`;
+    return `<button class="${cls}" data-onclick="goStep(${s})">${s}. ${n}</button>`;
   }).join('');
 }
 function goStep(s){ state.step=s; render(); }
@@ -130,7 +130,7 @@ function viewClasse(){
   let cards = Object.keys(CLASSES).map(name=>{
     const cl = CLASSES[name];
     const sel = state.classe===name?' selected':'';
-    return `<div class="card${sel}" onclick="selectClasse('${name}')">
+    return `<div class="card${sel}" data-onclick="selectClasse('${name}')">
       <b>${name}</b>
       <div class="meta">Dado de Vida: d${cl.hitDie} · Atributo: ${cl.primary}</div>
       <div class="meta">Salvaguardas: ${cl.saves.join(', ')}</div>
@@ -152,19 +152,19 @@ function viewClasse(){
       const list=state.classeSkills||[];
       const checked = list.includes(s)?'checked':'';
       return `<label style="display:flex;align-items:center;background:var(--panel2);padding:6px 10px;border-radius:4px;cursor:pointer;">
-        <input type="checkbox" value="${s}" ${checked} onchange="toggleClasseSkill(this,'${s}')"> ${s}</label>`;
+        <input type="checkbox" value="${s}" ${checked} data-onchange="toggleClasseSkill(this,'${s}')"> ${s}</label>`;
     }).join('')}</div>`;
   }
   return `<div class="panel"><h2>Passo 1 — Escolha uma classe</h2>
     <p class="small">A classe define o papel do seu personagem em combate e suas principais habilidades.</p>
     <div class="row" style="margin-bottom:14px;align-items:center">
       <label class="ghost" style="cursor:pointer;padding:9px 18px;border-radius:4px;border:1px solid var(--border);font-size:13px">📂 Já tenho uma ficha salva (.json)
-        <input type="file" accept=".json" style="display:none" onchange="importFichaInput(this.files)"></label>
+        <input type="file" accept=".json" style="display:none" data-onchange="importFichaInput(this.files)"></label>
       <span class="small">Se você já criou seu personagem antes e exportou o arquivo, carregue aqui em vez de começar do zero.</span>
     </div>
     <div class="grid">${cards}</div>
     ${detail}
-    <div class="nav"><span></span><button class="action" onclick="goStep(2)" ${state.classe?'':'disabled'}>Próximo →</button></div>
+    <div class="nav"><span></span><button class="action" data-onclick="goStep(2)" ${state.classe?'':'disabled'}>Próximo →</button></div>
   </div>`;
 }
 function selectClasse(name){ state.classe=name; state.classeSkills=[]; state.equipamento=CLASSES[name].equipmentStart; render(); }
@@ -184,7 +184,7 @@ function viewEspecie(){
   let cards = Object.keys(SPECIES).map(name=>{
     const sp = SPECIES[name];
     const sel = state.especie===name?' selected':'';
-    return `<div class="card${sel}" onclick="selectEspecie('${name}')">
+    return `<div class="card${sel}" data-onclick="selectEspecie('${name}')">
       <b>${name}</b>
       <div class="meta">Tamanho: ${sp.size} · Deslocamento: ${sp.speed}m</div>
     </div>`;
@@ -201,7 +201,7 @@ function viewEspecie(){
     <p class="small">A espécie define traços especiais, tamanho e deslocamento (não dá mais bônus de atributo nas regras 2024 — isso agora vem do antecedente).</p>
     <div class="grid">${cards}</div>
     ${detail}
-    <div class="nav"><button class="ghost" onclick="goStep(1)">← Voltar</button><button class="action" onclick="goStep(3)" ${state.especie?'':'disabled'}>Próximo →</button></div>
+    <div class="nav"><button class="ghost" data-onclick="goStep(1)">← Voltar</button><button class="action" data-onclick="goStep(3)" ${state.especie?'':'disabled'}>Próximo →</button></div>
   </div>`;
 }
 function selectEspecie(name){ state.especie=name; render(); }
@@ -211,7 +211,7 @@ function viewAntecedente(){
   let cards = Object.keys(BACKGROUNDS).map(name=>{
     const bg = BACKGROUNDS[name];
     const sel = state.antecedente===name?' selected':'';
-    return `<div class="card${sel}" onclick="selectAntecedente('${name}')">
+    return `<div class="card${sel}" data-onclick="selectAntecedente('${name}')">
       <b>${name}</b>
       <div class="meta">Atributos: ${bg.attrs.join(', ')}</div>
       <div class="meta">Talento: ${bg.talent}</div>
@@ -231,7 +231,7 @@ function viewAntecedente(){
     <p class="small">O antecedente reflete a vida do personagem antes da aventura e agora é a fonte dos bônus de atributo.</p>
     <div class="grid">${cards}</div>
     ${detail}
-    <div class="nav"><button class="ghost" onclick="goStep(2)">← Voltar</button><button class="action" onclick="goStep(4)" ${state.antecedente?'':'disabled'}>Próximo →</button></div>
+    <div class="nav"><button class="ghost" data-onclick="goStep(2)">← Voltar</button><button class="action" data-onclick="goStep(4)" ${state.antecedente?'':'disabled'}>Próximo →</button></div>
   </div>`;
 }
 function selectAntecedente(name){ state.antecedente=name; state.bgBonus={}; render(); }
@@ -243,10 +243,10 @@ function viewAtributos(){
   const NAMES={FOR:"Força",DES:"Destreza",CON:"Constituição",INT:"Inteligência",SAB:"Sabedoria",CAR:"Carisma"};
 
   let methodHtml = `<div class="row">
-    <label style="flex:1"><input type="radio" name="method" ${state.atributoMetodo==='standard'?'checked':''} onchange="setMethod('standard')"> Conjunto Padrão (15,14,13,12,10,8) — recomendado para iniciantes</label>
+    <label style="flex:1"><input type="radio" name="method" ${state.atributoMetodo==='standard'?'checked':''} data-onchange="setMethod('standard')"> Conjunto Padrão (15,14,13,12,10,8) — recomendado para iniciantes</label>
   </div>
   <div class="row">
-    <label style="flex:1"><input type="radio" name="method" ${state.atributoMetodo==='points'?'checked':''} onchange="setMethod('points')"> Custo de Pontos (27 pontos)</label>
+    <label style="flex:1"><input type="radio" name="method" ${state.atributoMetodo==='points'?'checked':''} data-onchange="setMethod('points')"> Custo de Pontos (27 pontos)</label>
   </div>`;
 
   let assignHtml = '';
@@ -256,19 +256,19 @@ function viewAtributos(){
     <div class="statgrid">${attrs.map(a=>{
       const v = state.base[a] || (suggestion?suggestion[a]:null);
       return `<div class="statbox"><div class="lbl">${a}</div>
-        <select onchange="setBase('${a}',this.value)">
+        <select data-onchange="setBase('${a}',this.value)">
           <option value="">-</option>
           ${[15,14,13,12,10,8].map(n=>`<option value="${n}" ${v==n?'selected':''}>${n}</option>`).join('')}
         </select></div>`;
     }).join('')}</div>
-    <button class="ghost" onclick="applySuggestion()">Usar sugestão da classe automaticamente</button>`;
+    <button class="ghost" data-onclick="applySuggestion()">Usar sugestão da classe automaticamente</button>`;
   } else {
     let spent = attrs.reduce((s,a)=>s+(POINT_COST[state.base[a]||8]||0),0);
     assignHtml = `<p class="small">Pontos gastos: <b>${spent} / 27</b> ${spent>27?'<span class="pool-warning">— excedeu o limite!</span>':''}</p>
     <div class="statgrid">${attrs.map(a=>{
       const v = state.base[a]||8;
       return `<div class="statbox"><div class="lbl">${a}</div>
-        <select onchange="setBase('${a}',this.value)">
+        <select data-onchange="setBase('${a}',this.value)">
           ${[8,9,10,11,12,13,14,15].map(n=>`<option value="${n}" ${v==n?'selected':''}>${n}</option>`).join('')}
         </select></div>`;
     }).join('')}</div>`;
@@ -283,7 +283,7 @@ function viewAtributos(){
       const abbr=Object.keys(NAMES).find(k=>NAMES[k]===a);
       const cur = state.bgBonus[abbr]||0;
       return `<div class="col"><label>${a}</label>
-        <select onchange="setBgBonus('${abbr}',this.value)">
+        <select data-onchange="setBgBonus('${abbr}',this.value)">
           <option value="0" ${cur==0?'selected':''}>+0</option>
           <option value="1" ${cur==1?'selected':''}>+1</option>
           <option value="2" ${cur==2?'selected':''}>+2</option>
@@ -307,7 +307,7 @@ function viewAtributos(){
     ${bgHtml}
     ${bonusWarning}
     ${previewHtml}
-    <div class="nav"><button class="ghost" onclick="goStep(3)">← Voltar</button><button class="action" onclick="goStep(5)">Ver ficha →</button></div>
+    <div class="nav"><button class="ghost" data-onclick="goStep(3)">← Voltar</button><button class="action" data-onclick="goStep(5)">Ver ficha →</button></div>
   </div>`;
 }
 function setMethod(m){ state.atributoMetodo=m; render(); }
@@ -328,7 +328,7 @@ function calcFinal(){
   return final;
 }
 function tip(termo, texto){
-  return `<span class="tipword" onclick="event.stopPropagation();toggleTip(this)">${termo} <span class="tipicon">ⓘ</span><span class="tipbox">${texto}</span></span>`;
+  return `<span class="tipword" data-onclick="event.stopPropagation();toggleTip(this)">${termo} <span class="tipicon">ⓘ</span><span class="tipbox">${texto}</span></span>`;
 }
 function toggleTip(el){ el.classList.toggle('open'); }
 
@@ -353,7 +353,7 @@ function rollDado(sides, modificador, resId, label){
 function viewFicha(){
   if(!state.classe||!state.especie||!state.antecedente){
     return `<div class="panel"><h2>Ficha</h2><p>Complete os passos 1 a 3 antes de gerar a ficha.</p>
-    <div class="nav"><button class="ghost" onclick="goStep(1)">← Voltar ao início</button></div></div>`;
+    <div class="nav"><button class="ghost" data-onclick="goStep(1)">← Voltar ao início</button></div></div>`;
   }
   const cl = CLASSES[state.classe];
   const sp = SPECIES[state.especie];
@@ -379,7 +379,7 @@ function viewFicha(){
     const id = 'sk_'+s.replace(/[^a-zA-Z]/g,'');
     return `<div class="kv"><span>${isProf?'●':'○'} ${s} <span class="small">(${attr})</span></span>
       <b style="display:flex;align-items:center;gap:6px">${fmtMod(total)}
-        <button class="dice-btn" onclick="rollDado(20,${total},'${id}')">🎲</button>
+        <button class="dice-btn" data-onclick="rollDado(20,${total},'${id}')">🎲</button>
         <span class="dice-res" id="${id}"></span>
       </b></div>`;
   }).join('');
@@ -390,7 +390,7 @@ function viewFicha(){
     const id = 'sv_'+a;
     return `<div class="kv"><span>${isProf?'●':'○'} ${NAMES[a]}</span>
       <b style="display:flex;align-items:center;gap:6px">${fmtMod(total)}
-        <button class="dice-btn" onclick="rollDado(20,${total},'${id}')">🎲</button>
+        <button class="dice-btn" data-onclick="rollDado(20,${total},'${id}')">🎲</button>
         <span class="dice-res" id="${id}"></span>
       </b></div>`;
   }).join('');
@@ -414,14 +414,14 @@ function viewFicha(){
 
   // --- Equipamento ---
   const equipamentoHtml = `<h3>Equipamento inicial ${tip('(o que é isso?','Sua classe já vem com esses itens de partida. É um texto livre: risque, apague ou reescreva conforme for trocando de equipamento na aventura — não tem sistema automático de troca, é só uma anotação viva.')}</h3>
-    <textarea style="min-height:70px" oninput="state.equipamento=this.value">${state.equipamento}</textarea>`;
+    <textarea style="min-height:70px" data-oninput="state.equipamento=this.value">${state.equipamento}</textarea>`;
 
   // --- Inventário com quantidade ---
   const invRows = state.inventario.map(it=>`
     <div class="inv-item"><span>${it.desc}</span>
       <span style="display:flex;align-items:center;gap:6px">
-        <button onclick="decQty(${it.id})">−</button><b style="min-width:22px;text-align:center;display:inline-block">${it.qty}</b><button onclick="incQty(${it.id})">+</button>
-        <button onclick="removeItem(${it.id})" title="Remover item">✕</button>
+        <button data-onclick="decQty(${it.id})">−</button><b style="min-width:22px;text-align:center;display:inline-block">${it.qty}</b><button data-onclick="incQty(${it.id})">+</button>
+        <button data-onclick="removeItem(${it.id})" title="Remover item">✕</button>
       </span></div>`).join('') || '<p class="small">Nenhum item ainda.</p>';
 
   // --- Armas equipadas com bônus calculado ---
@@ -431,9 +431,9 @@ function viewFicha(){
     const id = 'arma_'+a.id;
     return `<div class="inv-item"><span>${a.nome} <span class="small">(${a.stat}${a.bonusExtra?', '+fmtMod(Number(a.bonusExtra))+' extra':''})</span></span>
       <span style="display:flex;align-items:center;gap:6px"><b>${fmtMod(total)}</b>
-        <button class="dice-btn" onclick="rollDado(20,${total},'${id}')">🎲</button>
+        <button class="dice-btn" data-onclick="rollDado(20,${total},'${id}')">🎲</button>
         <span class="dice-res" id="${id}"></span>
-        <button onclick="removeArma(${a.id})">✕</button></span></div>`;
+        <button data-onclick="removeArma(${a.id})">✕</button></span></div>`;
   }).join('') || '<p class="small">Nenhuma arma equipada ainda.</p>';
 
   // --- Espaços de magia ---
@@ -443,11 +443,11 @@ function viewFicha(){
       const p = PACT_SLOTS[lvl];
       const boxes = Array.from({length:p.n}).map((_,i)=>{
         const used = i < state.pactUsed;
-        return `<span class="slotbox ${used?'used':''}" onclick="togglePact(${i})"></span>`;
+        return `<span class="slotbox ${used?'used':''}" data-onclick="togglePact(${i})"></span>`;
       }).join('');
       spellHtml = `<h3>Espaços de Magia de Pacto (Bruxo) ${tip('como funciona?','Todos os seus espaços são do mesmo círculo ('+p.c+'º) e voltam em Descanso Curto — clique numa caixinha pra marcar como gasto.')}</h3>
       <div class="row" style="align-items:center;gap:14px"><span>Círculo ${p.c}:</span><div>${boxes}</div>
-      <button class="ghost" onclick="descansoCurto()">Descanso Curto</button></div>`;
+      <button class="ghost" data-onclick="descansoCurto()">Descanso Curto</button></div>`;
     } else {
       const table = cl.cast.tipo==='full' ? FULL_SLOTS[lvl] : HALF_SLOTS[lvl];
       const rows = table.map((total,i)=>{
@@ -456,13 +456,13 @@ function viewFicha(){
         const used = state.spellUsed[circulo]||0;
         const boxes = Array.from({length:total}).map((_,j)=>{
           const isUsed = j<used;
-          return `<span class="slotbox ${isUsed?'used':''}" onclick="toggleSlot(${circulo},${j})"></span>`;
+          return `<span class="slotbox ${isUsed?'used':''}" data-onclick="toggleSlot(${circulo},${j})"></span>`;
         }).join('');
         return `<div class="kv"><span>Círculo ${circulo}</span><span>${boxes}</span></div>`;
       }).join('');
       spellHtml = `<h3>Espaços de Magia ${tip('gasto de magia','Cada vez que você conjura uma magia usando um espaço, marque uma caixinha. Descanso Longo limpa tudo; Descanso Curto não recupera espaços de magia normais (só os de Bruxo).')}</h3>
       ${rows}
-      <div class="row" style="margin-top:6px"><button class="ghost" onclick="descansoLongo()">Descanso Longo (recupera tudo)</button></div>`;
+      <div class="row" style="margin-top:6px"><button class="ghost" data-onclick="descansoLongo()">Descanso Longo (recupera tudo)</button></div>`;
     }
   }
 
@@ -470,27 +470,27 @@ function viewFicha(){
   const condRows = Object.keys(CONDICOES).map(c=>{
     const on = state.condicoes.includes(c);
     return `<label style="display:flex;align-items:center;gap:6px;background:var(--panel2);padding:5px 9px;border-radius:4px;cursor:pointer;font-size:12px;">
-      <input type="checkbox" ${on?'checked':''} onchange="toggleCondicao('${c}')"> ${tip(c, CONICOES_ESCAPE(c))}</label>`;
+      <input type="checkbox" ${on?'checked':''} data-onchange="toggleCondicao('${c}')"> ${tip(c, CONICOES_ESCAPE(c))}</label>`;
   }).join('');
 
   // --- Testes de morte (só aparece com 0 PV) ---
   const deathHtml = state.pvAtual<=0 ? `<h3 style="color:#d99">Testes de Morte ${tip('o que é isso?', 'Ao chegar a 0 PV você fica Inconsciente e faz um teste de morte no início de cada um dos seus turnos, até estabilizar, ser curado ou morrer.')}</h3>
-    <div class="row"><div class="col"><label>Sucessos</label>${[1,2,3].map(i=>`<input type="checkbox" ${state.deathSuccess>=i?'checked':''} onchange="setDeathSuccess(${i})">`).join(' ')}</div>
-    <div class="col"><label>Falhas</label>${[1,2,3].map(i=>`<input type="checkbox" ${state.deathFail>=i?'checked':''} onchange="setDeathFail(${i})">`).join(' ')}</div></div>
-    <button class="ghost" onclick="rollDado(20,0,'deathroll')">🎲 Rolar teste de morte</button> <span class="dice-res" id="deathroll"></span>
+    <div class="row"><div class="col"><label>Sucessos</label>${[1,2,3].map(i=>`<input type="checkbox" ${state.deathSuccess>=i?'checked':''} data-onchange="setDeathSuccess(${i})">`).join(' ')}</div>
+    <div class="col"><label>Falhas</label>${[1,2,3].map(i=>`<input type="checkbox" ${state.deathFail>=i?'checked':''} data-onchange="setDeathFail(${i})">`).join(' ')}</div></div>
+    <button class="ghost" data-onclick="rollDado(20,0,'deathroll')">🎲 Rolar teste de morte</button> <span class="dice-res" id="deathroll"></span>
     <p class="small">10 ou mais = sucesso, abaixo de 10 = falha. 3 sucessos estabiliza, 3 falhas e o personagem morre. Um 20 natural recupera 1 PV.</p>` : '';
 
   // --- Dinheiro ---
   const dinheiroHtml = `<h3>Dinheiro</h3><div class="row">
-    <div class="col"><label>Peças de Ouro</label><input type="number" value="${state.dinheiro.po}" onchange="state.dinheiro.po=Number(this.value);render()"></div>
-    <div class="col"><label>Peças de Prata</label><input type="number" value="${state.dinheiro.pp}" onchange="state.dinheiro.pp=Number(this.value);render()"></div>
-    <div class="col"><label>Peças de Cobre</label><input type="number" value="${state.dinheiro.pc}" onchange="state.dinheiro.pc=Number(this.value);render()"></div>
+    <div class="col"><label>Peças de Ouro</label><input type="number" value="${state.dinheiro.po}" data-onchange="state.dinheiro.po=Number(this.value);render()"></div>
+    <div class="col"><label>Peças de Prata</label><input type="number" value="${state.dinheiro.pp}" data-onchange="state.dinheiro.pp=Number(this.value);render()"></div>
+    <div class="col"><label>Peças de Cobre</label><input type="number" value="${state.dinheiro.pc}" data-onchange="state.dinheiro.pc=Number(this.value);render()"></div>
   </div>`;
 
   // --- Checklist pré-sessão ---
   const checklistItens = ["Conferi meus Pontos de Vida","Conferi meus espaços de magia / usos por descanso","Conferi meus itens consumíveis (flechas, poções, etc)","Sei o nome e a CA aproximada da minha arma principal"];
   const checklistHtml = `<h3>Checklist antes da sessão</h3>${checklistItens.map((c,i)=>`
-    <label style="display:block;font-size:13px;margin:4px 0;cursor:pointer;"><input type="checkbox" ${state.checklist[i]?'checked':''} onchange="toggleChecklist(${i})"> ${c}</label>`).join('')}`;
+    <label style="display:block;font-size:13px;margin:4px 0;cursor:pointer;"><input type="checkbox" ${state.checklist[i]?'checked':''} data-onchange="toggleChecklist(${i})"> ${c}</label>`).join('')}`;
 
   // --- Frases de interpretação ---
   const frasesHtml = `<details><summary style="cursor:pointer;color:var(--accent2)">💬 Preciso de ideias pra interpretar (clique pra abrir)</summary>
@@ -502,15 +502,15 @@ function viewFicha(){
   return `<div class="sheet ${hpClass}">
     <div class="sheet-header">
       <div>
-        <input type="text" placeholder="Nome do personagem" value="${state.nome}" oninput="state.nome=this.value"
+        <input type="text" placeholder="Nome do personagem" value="${state.nome}" data-oninput="state.nome=this.value"
           style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--accent2);font-size:20px;font-family:inherit;padding:2px;">
         <div class="meta">${state.especie} ${state.classe}${state.subclasseNota?' ('+state.subclasseNota+')':''} · Nível ${lvl} · Antecedente: ${state.antecedente}</div>
       </div>
       <div style="text-align:right">
         <div class="small">Bônus de Proficiência</div>
         <div style="font-size:22px;color:var(--accent2)">${fmtMod(prof)}</div>
-        <button class="ghost" onclick="toggleGlossario()" style="margin-top:6px">📖 Glossário</button>
-        <button class="ghost" onclick="exportFicha()" style="margin-top:6px">💾 Exportar como backup</button>
+        <button class="ghost" data-onclick="toggleGlossario()" style="margin-top:6px">📖 Glossário</button>
+        <button class="ghost" data-onclick="exportFicha()" style="margin-top:6px">💾 Exportar como backup</button>
       </div>
     </div>
     <p class="small" style="margin-top:-6px">Exportar é só um backup local — a ficha já salva e sincroniza sozinha pelo token do Owlbear (veja o aviso no topo da página).</p>
@@ -521,7 +521,7 @@ function viewFicha(){
     <div class="statgrid">${["FOR","DES","CON","INT","SAB","CAR"].map(a=>{
       const id='at_'+a;
       return `<div class="statbox"><div class="lbl">${a}</div><div class="val">${final[a]}</div><div class="mod">${fmtMod(mod(final[a]))}</div>
-      <button class="dice-btn" onclick="rollDado(20,${mod(final[a])},'${id}')">🎲</button><div class="dice-res" id="${id}"></div></div>`;
+      <button class="dice-btn" data-onclick="rollDado(20,${mod(final[a])},'${id}')">🎲</button><div class="dice-res" id="${id}"></div></div>`;
     }).join('')}
     </div>
 
@@ -529,12 +529,12 @@ function viewFicha(){
       <div class="col">
         <h3>Combate</h3>
         <div class="kv"><span>Pontos de Vida</span><b>
-          <input type="number" value="${state.pvAtual}" style="width:50px" onchange="state.pvAtual=Number(this.value);render()"> / ${state.pvMax}
+          <input type="number" value="${state.pvAtual}" style="width:50px" data-onchange="state.pvAtual=Number(this.value);render()"> / ${state.pvMax}
         </b></div>
         <div class="kv"><span>Classe de Armadura (base)</span><b>${10+mod(final.DES)}</b></div>
         <div class="kv"><span>Deslocamento</span><b>${sp.speed} m</b></div>
         <div class="kv"><span>Iniciativa</span><b style="display:flex;align-items:center;gap:6px">${fmtMod(mod(final.DES))}
-          <button class="dice-btn" onclick="rollDado(20,${mod(final.DES)},'iniroll')">🎲</button><span class="dice-res" id="iniroll"></span></b></div>
+          <button class="dice-btn" data-onclick="rollDado(20,${mod(final.DES)},'iniroll')">🎲</button><span class="dice-res" id="iniroll"></span></b></div>
         <div class="kv"><span>Percepção Passiva</span><b>${passivePerception}</b></div>
         <div class="kv"><span>Dado de Vida</span><b>d${cl.hitDie}</b></div>
 
@@ -562,12 +562,12 @@ function viewFicha(){
     <div class="row">
       <div class="col">
         <label>XP atual</label>
-        <input type="number" value="${state.xp}" onchange="state.xp=Number(this.value);render()">
+        <input type="number" value="${state.xp}" data-onchange="state.xp=Number(this.value);render()">
         <div class="xpbar" style="margin-top:8px"><div class="xpbar-fill" style="width:${xpProgress}%"></div></div>
         <div class="small">${nextLevelRow? (nextLevelRow.xp-state.xp)+' XP para o nível '+nextLevelRow.lvl : 'Nível máximo'}</div>
       </div>
       <div class="col" style="display:flex;align-items:flex-end">
-        <button class="action" onclick="levelUp()" ${!nextLevelRow||state.xp<nextLevelRow.xp?'disabled':''}>Subir para o nível ${lvl+1}</button>
+        <button class="action" data-onclick="levelUp()" ${!nextLevelRow||state.xp<nextLevelRow.xp?'disabled':''}>Subir para o nível ${lvl+1}</button>
       </div>
     </div>
     ${renderAsiPanel(lvl)}
@@ -582,7 +582,7 @@ function viewFicha(){
       <div class="col" style="max-width:110px"><label>Atributo</label>
         <select id="newArmaStat"><option value="FOR">Força</option><option value="DES">Destreza</option><option value="Nenhum">Nenhum</option></select></div>
       <div class="col" style="max-width:90px"><label>Bônus extra</label><input type="number" id="newArmaBonus" value="0"></div>
-      <button class="ghost" onclick="addArma()">+ Adicionar</button>
+      <button class="ghost" data-onclick="addArma()">+ Adicionar</button>
     </div>
 
     ${equipamentoHtml}
@@ -592,7 +592,7 @@ function viewFicha(){
     <div class="row" style="margin-top:8px">
       <input type="text" id="newItem" placeholder="Adicionar item (ex: Flecha)" style="flex:1">
       <input type="number" id="newItemQty" placeholder="Qtd" value="1" style="max-width:70px">
-      <button class="ghost" onclick="addItem()">+ Adicionar</button>
+      <button class="ghost" data-onclick="addItem()">+ Adicionar</button>
     </div>
 
     ${dinheiroHtml}
@@ -605,9 +605,9 @@ function viewFicha(){
     ${frasesHtml}
 
     <h3>Anotações</h3>
-    <textarea placeholder="Anote decisões, itens usados fora do inventário, XP ganho em sessão, etc." oninput="state.anotacoes=this.value">${state.anotacoes}</textarea>
+    <textarea placeholder="Anote decisões, itens usados fora do inventário, XP ganho em sessão, etc." data-oninput="state.anotacoes=this.value">${state.anotacoes}</textarea>
   </div>
-  <div class="nav"><button class="ghost" onclick="goStep(4)">← Voltar</button><span></span></div>
+  <div class="nav"><button class="ghost" data-onclick="goStep(4)">← Voltar</button><span></span></div>
   ${renderGlossarioModal()}`;
 }
 
@@ -621,7 +621,7 @@ function renderSubclassPanel(lvl){
     <p class="small">Selecione a subclasse de ${state.classe} que você quer seguir. As características dela vão aparecendo nos níveis certos, e você confere os detalhes no livro.</p>
     <label>Subclasse</label>
     <select id="subclasseSelect">${opcoes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>
-    <button class="action" style="margin-top:10px" onclick="confirmSubclass(${lvl})">Confirmar subclasse</button>
+    <button class="action" style="margin-top:10px" data-onclick="confirmSubclass(${lvl})">Confirmar subclasse</button>
   </div>`;
 }
 function confirmSubclass(lvl){
@@ -653,7 +653,7 @@ function renderAsiPanel(lvl){
     </div>
     <label>Ou, em vez disso, anote um Talento escolhido</label>
     <input type="text" id="asiFeatTxt" placeholder="ex: Atento, Duro na Queda...">
-    <button class="action" style="margin-top:10px" onclick="confirmAsi(${lvl})">Confirmar escolha do nível ${lvl}</button>
+    <button class="action" style="margin-top:10px" data-onclick="confirmAsi(${lvl})">Confirmar escolha do nível ${lvl}</button>
   </div>`;
 }
 function confirmAsi(lvl){
@@ -685,11 +685,11 @@ function toggleGlossario(){
   if(m) m.classList.toggle('open');
 }
 function renderGlossarioModal(){
-  return `<div class="modal-overlay" id="glossModal" onclick="if(event.target===this)toggleGlossario()">
+  return `<div class="modal-overlay" id="glossModal" data-onclick="if(event.target===this)toggleGlossario()">
     <div class="modal-box">
       <div class="row" style="justify-content:space-between;align-items:center">
         <h3 style="margin:0">Glossário rápido</h3>
-        <button class="ghost" onclick="toggleGlossario()">Fechar ✕</button>
+        <button class="ghost" data-onclick="toggleGlossario()">Fechar ✕</button>
       </div>
       ${GLOSSARIO.map(g=>`<div class="featurebox"><b>${g[0]}:</b> ${g[1]}</div>`).join('')}
     </div>
