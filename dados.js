@@ -365,30 +365,6 @@ const SKILL_ATTR = {Acrobacia:"DES",Arcanismo:"INT",Atletismo:"FOR",Atuação:"C
  Natureza:"INT",Percepção:"SAB",Persuasão:"CAR",Prestidigitação:"DES",Religião:"INT",Sobrevivência:"SAB"};
 const POINT_COST = {8:0,9:1,10:2,11:3,12:4,13:5,14:7,15:9};
 
-/* ============================= ESTADO ============================= */
-let state = {
-  step:1,
-  classe:null, subclasseNota:"",
-  especie:null,
-  antecedente:null,
-  atributoMetodo:"standard",
-  base:{FOR:null,DES:null,CON:null,INT:null,SAB:null,CAR:null},
-  bgBonus:{}, // atributo -> +1/+2 escolhido pelo jogador
-  nome:"", nivel:1, xp:0, pvAtual:null, pvMax:null,
-  inventario:[], anotacoes:"",
-  equipamento:"", nextItemId:1,
-  armas:[], nextArmaId:1,
-  asiBonus:{}, // atributo -> total de pontos ganhos por ASI
-  asiFeats:{}, // nivel -> texto do talento escolhido (se optou por talento em vez de +2/+1)
-  historico:[], // registro automático de conquistas ao subir de nível
-  spellUsed:{}, // circulo -> quantidade usada
-  pactUsed:0,
-  condicoes:[],
-  dinheiro:{po:0,pp:0,pc:0},
-  deathSuccess:0, deathFail:0,
-  checklist:{}
-};
-
 function mod(v){ return Math.floor((v-10)/2); }
 function fmtMod(m){ return (m>=0?"+":"")+m; }
 function profBonus(lvl){ return XP_TABLE.find(r=>lvl>=r.lvl && (r.lvl===20||lvl<XP_TABLE[XP_TABLE.indexOf(r)+1]?.lvl))?.prof || (XP_TABLE.slice().reverse().find(r=>lvl>=r.lvl)||XP_TABLE[0]).prof; }

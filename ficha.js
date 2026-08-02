@@ -1,3 +1,4 @@
+(function(){
 
 const META_KEY = "com.jonesdnd.ficha/dados";
 const params = new URLSearchParams(location.search);
@@ -766,3 +767,5 @@ function toggleChecklist(i){ state.checklist[i] = !state.checklist[i]; render();
 render();
 ligarOwlbear();
 
+
+})();

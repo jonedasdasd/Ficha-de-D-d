@@ -1,0 +1,60 @@
+FICHA DE D&D — EXTENSÃO DO OWLBEAR RODEO (versão corrigida)
+================================================================
+
+CORREÇÃO IMPORTANTE (leia antes de subir de novo!)
+------------------------------------------------------------
+O Owlbear Rodeo bloqueia scripts JavaScript escritos direto dentro do
+HTML ("inline script"), por segurança. A primeira versão desses
+arquivos tinha o código JS direto dentro do mestre.html, ficha.html e
+background.html, por isso a ficha ficava travada com um ícone de
+"página quebrada".
+
+Agora o código de cada tela foi movido pra arquivos .js separados:
+- mestre.html      -> usa mestre.js
+- ficha.html       -> usa ficha.js
+- background.html  -> usa background.js
+
+Os arquivos HTML e os .js precisam ficar TODOS juntos, na mesma pasta,
+igual antes.
+
+
+O QUE É CADA ARQUIVO
+---------------------
+- manifest.json    -> descreve a extensão pro Owlbear (não edite).
+- background.html / background.js -> roda escondido, coloca o botão
+                       "Ficha de Personagem" no menu do token.
+- dados.js         -> classes, espécies, antecedentes, magias etc.
+- ficha.html / ficha.js -> a ficha de criação/visualização do
+                       personagem. Abre ao clicar num token.
+- mestre.html / mestre.js -> o seu painel (PV do grupo, monstros,
+                       guia rápido). Abre pelo ícone da extensão.
+- icon.svg         -> o ícone da extensão.
+
+Os 8 arquivos precisam ficar juntos, na mesma pasta, quando forem
+publicados.
+
+
+COMO ATUALIZAR NO GITHUB (você já tem o repositório criado)
+---------------------------------------------------------------
+1. Entra no seu repositório em github.com (Ficha-de-D-d).
+2. Clica em "Add file" -> "Upload files".
+3. Arrasta os 8 arquivos desta pasta (isso vai SUBSTITUIR os arquivos
+   antigos com o mesmo nome, e ADICIONAR os 3 arquivos .js novos).
+4. Clica em "Commit changes".
+5. Espera 1 a 2 minutos pro GitHub Pages publicar de novo.
+6. No Owlbear, remove a extensão antiga e adiciona de novo colando o
+   link do manifest (o endereço não muda):
+
+       https://jonedasdasd.github.io/Ficha-de-D-d/manifest.json
+
+7. Testa clicando no ícone da extensão e no menu do token de novo.
+
+
+LIMITAÇÕES E OBSERVAÇÕES
+---------------------------
+- Cada personagem fica preso a UM token. Se o jogador apagar o token
+  dele sem querer, a ficha some junto (use o botão de exportar backup
+  dentro da própria ficha de vez em quando).
+- Se depois de reenviar ainda aparecer erro, abre o DevTools (F12) no
+  Owlbear, aba Console, tenta abrir a ficha de novo, e me manda um
+  print da mensagem em vermelho que aparecer — ajusto rapidinho.

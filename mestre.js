@@ -1,3 +1,4 @@
+(function(){
 
 const META_KEY = "com.jonesdnd.ficha/dados";
 const MON_KEY = "com.jonesdnd.ficha/monstros";
@@ -243,3 +244,5 @@ function viewMestre(){
 render();
 ligarOwlbear();
 
+
+})();
