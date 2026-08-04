@@ -1,14 +1,13 @@
-(function(){
 
-const META_KEY = "com.jonesdnd.ficha/dados";
-const params = new URLSearchParams(location.search);
-const itemId = params.get("item");
-let OBR = null;
-let obrLigado = false;
-let saveTimer = null;
+var META_KEY = "com.jonesdnd.ficha/dados";
+var params = new URLSearchParams(location.search);
+var itemId = params.get("item");
+var OBR = null;
+var obrLigado = false;
+var saveTimer = null;
 
 /* ============================= ESTADO ============================= */
-let state = {
+var state = {
   step:1,
   classe:null, subclasseNota:"",
   especie:null,
@@ -33,7 +32,7 @@ let state = {
 };
 
 /* ============================= NAV ============================= */
-const STEP_NAMES = ["Classe","Espécie","Antecedente","Atributos","Ficha"];
+var STEP_NAMES = ["Classe","Espécie","Antecedente","Atributos","Ficha"];
 function renderStepNav(){
   const nav = document.getElementById('stepNav');
   nav.innerHTML = STEP_NAMES.map((n,i)=>{
@@ -768,4 +767,3 @@ render();
 ligarOwlbear();
 
 
-})();

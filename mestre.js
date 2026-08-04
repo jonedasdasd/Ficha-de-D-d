@@ -1,10 +1,11 @@
-(function(){
 
-const META_KEY = "com.jonesdnd.ficha/dados";
-const MON_KEY = "com.jonesdnd.ficha/monstros";
-let OBR = null;
-let obrLigado = false;
-let mestre = { personagens:{}, monstros:[] };
+var META_KEY = "com.jonesdnd.ficha/dados";
+var MON_KEY = "com.jonesdnd.ficha/monstros";
+var OBR = null;
+var obrLigado = false;
+var mestre = { personagens:{}, monstros:[] };
+var vinculando = null; // {monId, idx} enquanto espera o clique num token do mapa
+var pararDeEscutarSelecao = null;
 
 function renderObrStatus(){
   const el = document.getElementById('obrStatus');
@@ -106,6 +107,48 @@ function monstroAplicarTodos(id, delta){
   render();
 }
 
+function iniciarVinculo(monId, idx){
+  if(!OBR){ alert('Ainda conectando à sala, espera um instante e tenta de novo.'); return; }
+  vinculando = { monId, idx };
+  render();
+  if(pararDeEscutarSelecao) pararDeEscutarSelecao();
+  pararDeEscutarSelecao = OBR.player.onChange(async (player)=>{
+    if(!vinculando) return;
+    const sel = player && player.selection;
+    if(!sel || !sel.length) return;
+    const alvoId = sel[0];
+    try{
+      const items = await OBR.scene.items.getItems((it)=> it.id===alvoId);
+      const it = items[0];
+      if(it){
+        const m = mestre.monstros.find(m=>m.id===vinculando.monId);
+        const mb = m && m.membros[vinculando.idx];
+        if(mb){
+          mb.tokenId = it.id;
+          mb.tokenImage = (it.image && it.image.url) || null;
+          mb.tokenNome = it.name || null;
+          salvarMonstros();
+        }
+      }
+    }catch(e){}
+    vinculando = null;
+    if(pararDeEscutarSelecao){ pararDeEscutarSelecao(); pararDeEscutarSelecao = null; }
+    render();
+  });
+}
+function cancelarVinculo(){
+  vinculando = null;
+  if(pararDeEscutarSelecao){ pararDeEscutarSelecao(); pararDeEscutarSelecao = null; }
+  render();
+}
+function desvincularToken(monId, idx){
+  const m = mestre.monstros.find(m=>m.id===monId); if(!m) return;
+  const mb = m.membros[idx]; if(!mb) return;
+  delete mb.tokenId; delete mb.tokenImage; delete mb.tokenNome;
+  salvarMonstros();
+  render();
+}
+
 function render(){
   renderObrStatus();
   document.getElementById('content').innerHTML = viewMestre();
@@ -152,12 +195,22 @@ function viewMestre(){
     const vivos = m.membros.filter(mb=>mb.pvAtual>0).length;
     const membrosHtml = m.membros.map((mb,idx)=>{
       const morto = mb.pvAtual<=0;
-      return `<div class="kv" style="opacity:${morto?0.5:1}">
-        <span>${m.membros.length>1? (m.nome+' #'+(idx+1)) : m.nome}${morto?' 💀':''}</span>
-        <b style="display:flex;align-items:center;gap:8px">PV ${mb.pvAtual}/${mb.pvMax}
+      const vinculandoEsse = vinculando && vinculando.monId===m.id && vinculando.idx===idx;
+      const thumb = mb.tokenImage
+        ? `<img src="${mb.tokenImage}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px;border:1px solid var(--border)">`
+        : '';
+      const btnVinculo = vinculandoEsse
+        ? `<button class="ghost" data-onclick="cancelarVinculo()">clique no token no mapa... (cancelar)</button>`
+        : (mb.tokenImage
+            ? `<button class="ghost" data-onclick="desvincularToken('${m.id}',${idx})">🔗 trocar/desvincular</button>`
+            : `<button class="ghost" data-onclick="iniciarVinculo('${m.id}',${idx})">🔗 vincular token</button>`);
+      return `<div class="kv" style="opacity:${morto?0.5:1};flex-wrap:wrap">
+        <span>${thumb}${m.membros.length>1? (m.nome+' #'+(idx+1)) : m.nome}${morto?' 💀':''}</span>
+        <b style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">PV ${mb.pvAtual}/${mb.pvMax}
           <button class="ghost" data-onclick="monstroAjustarPV('${m.id}',${idx},-5)">-5</button>
           <button class="ghost" data-onclick="monstroAjustarPV('${m.id}',${idx},-1)">-1</button>
           <button class="ghost" data-onclick="monstroAjustarPV('${m.id}',${idx},1)">+1</button>
+          ${btnVinculo}
         </b></div>`;
     }).join('');
     return `<div class="panel" style="margin-top:10px">
@@ -185,7 +238,7 @@ function viewMestre(){
     ${linhas}
 
     <h3 style="margin-top:22px">Monstros / inimigos</h3>
-    <p class="small">Crie o monstro com PV e o dano de ataque dele (você já calcula o "acerta ou não" e o bônus de ataque por conta própria — aqui é só pra acompanhar vida e lembrar do dano). Pra um grupo (ex: 4 goblins), coloque a quantidade e cada um ganha sua própria barra de vida.</p>
+    <p class="small">Crie o monstro com PV e o dano de ataque dele (você já calcula o "acerta ou não" e o bônus de ataque por conta própria — aqui é só pra acompanhar vida e lembrar do dano). Pra um grupo (ex: 4 goblins), coloque a quantidade e cada um ganha sua própria barra de vida. Depois de criar, clique em "🔗 vincular token" e clique no token dele no mapa — a foto aparece aqui do lado do nome.</p>
     <div class="row" style="flex-wrap:wrap;gap:8px">
       <input id="monNome" placeholder="Nome (ex: Goblin)" style="max-width:160px">
       <input id="monQtd" type="number" min="1" value="1" placeholder="Qtd" style="max-width:70px">
@@ -245,4 +298,3 @@ render();
 ligarOwlbear();
 
 
-})();
