@@ -69,6 +69,16 @@ async function carregarDoItem(){
     }
     // Só marcar como ligado se a leitura do item tiver sucesso
     obrLigado = true;
+    // Se não há metadata no token, tente restaurar backup local automático
+    const hasMeta = item && item.metadata && item.metadata[META_KEY];
+    if(!hasMeta){
+      const backup = loadLocalBackup();
+      if(backup){
+        Object.assign(state, backup);
+        const el = document.getElementById('obrStatus');
+        if(el) el.innerHTML = '⚠️ Restaurado backup local — salve agora para gravar no token.';
+      }
+    }
   }catch(e){
     console.error('Ficha: erro ao carregar dados do item', e);
     obrLigado = false;
@@ -80,18 +90,45 @@ function agendarSalvar(){
   clearTimeout(saveTimer);
   saveTimer = setTimeout(salvarNoItem, 600);
 }
+
+// Backup local para evitar perda caso o SDK/serviço falhe ou o popover feche.
+function _backupKey(){ return META_KEY+':backup:'+(itemId||'unsaved'); }
+function saveLocalBackup(){
+  try{
+    const snapshot = JSON.stringify(state);
+    localStorage.setItem(_backupKey(), snapshot);
+  }catch(e){ /* nada a fazer */ }
+}
+function loadLocalBackup(){
+  try{
+    const raw = localStorage.getItem(_backupKey());
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){ return null; }
+}
+function clearLocalBackup(){ try{ localStorage.removeItem(_backupKey()); }catch(e){} }
 async function salvarNoItem(){
-  if(!itemId || !OBR || !obrLigado) return;
+  // se não tem item ligado, guarda só no backup local para não perder.
+  if(!itemId || !OBR || !obrLigado){
+    saveLocalBackup();
+    const el = document.getElementById('obrStatus');
+    if(el) el.innerHTML = '⚠️ Ficha não ligada ao token ou SDK indisponível — salvo localmente.';
+    return;
+  }
   state._ts = Date.now();
   const snapshot = JSON.parse(JSON.stringify(state));
   try{
     await OBR.scene.items.updateItems([itemId], (items)=>{
       for(const it of items) it.metadata[META_KEY] = snapshot;
     });
+    // sucesso: remove backup local
+    clearLocalBackup();
   }catch(e){
     console.error('Ficha: erro ao salvarNoItem', e);
+    // salva backup local para não perder trabalho
+    saveLocalBackup();
     const el = document.getElementById('obrStatus');
-    if(el) el.innerHTML = '⚠️ Erro ao salvar a ficha — verifique o console do navegador.';
+    if(el) el.innerHTML = '⚠️ Erro ao salvar a ficha — backup salvo localmente.';
     return;
   }
   sincronizarStatusNoToken();
