@@ -71,7 +71,11 @@ async function _construirPilhaStatus(itemId, info, dpi, cx, topoY, largura, altu
    de PV, "CA · Iniciativa" e barra de mana (só se info.manaMax vier preenchido). */
 async function sincronizarStatusToken(itemId, info){
   if(!itemId || !OBR || !OBRMOD) return;
-  if(typeof obrLigado!=='undefined' && !obrLigado) return; // sala ainda conectando, tenta na próxima mudança
+  // Se o SDK ainda não estiver pronto/registrado, não tente enviar mensagens.
+  if(!OBR.isAvailable){
+    console.warn('Ficha D&D: SDK não pronto — adiando sincronização do token', itemId);
+    return;
+  }
   try{
     const dpi = await OBR.scene.grid.getDpi();
     const items = await OBR.scene.items.getItems([itemId]);
@@ -150,8 +154,11 @@ async function sincronizarStatusToken(itemId, info){
    personagem cuja ficha nunca foi aberta nessa versão), não faz nada — ela é
    criada na próxima vez que a ficha do jogador salvar sozinha. */
 async function atualizarApenasPV(itemId, pvAtual, pvMax){
-  if(!itemId || !OBR) return;
-  if(typeof obrLigado!=='undefined' && !obrLigado) return; // sala ainda conectando, tenta na próxima mudança
+  if(!itemId || !OBR || !OBRMOD) return;
+  if(!OBR.isAvailable){
+    console.warn('Ficha D&D: SDK não pronto — adiando atualização de PV', itemId);
+    return;
+  }
   try{
     const items = await OBR.scene.items.getItems([itemId]);
     const token = items[0];
@@ -175,7 +182,11 @@ async function atualizarApenasPV(itemId, pvAtual, pvMax){
 /* Apaga a pilha de status desse token (usado quando o mestre desvincula uma
    ficha ou remove um monstro). */
 async function removerStatusToken(itemId){
-  if(!itemId || !OBR) return;
+  if(!itemId || !OBR || !OBRMOD) return;
+  if(!OBR.isAvailable){
+    console.warn('Ficha D&D: SDK não pronto — adiando remoção de status para', itemId);
+    return;
+  }
   try{
     const items = await OBR.scene.items.getItems([itemId]);
     const token = items[0];
