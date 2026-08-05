@@ -3,6 +3,7 @@ var META_KEY = "com.jonesdnd.ficha/dados";
 var params = new URLSearchParams(location.search);
 var itemId = params.get("item");
 var OBR = null;
+var OBRMOD = null;
 var obrLigado = false;
 var saveTimer = null;
 
@@ -28,6 +29,7 @@ var state = {
   dinheiro:{po:0,pp:0,pc:0},
   deathSuccess:0, deathFail:0,
   checklist:{},
+  caBonus:0,
   _ts:0
 };
 
@@ -83,11 +85,50 @@ async function salvarNoItem(){
       for(const it of items) it.metadata[META_KEY] = snapshot;
     });
   }catch(e){ /* rede momentânea — próxima alteração tenta salvar de novo */ }
+  sincronizarStatusNoToken();
+}
+
+/* Calcula quanto de "mana"/recurso mágico resta (soma de todos os espaços de
+   magia, ou os espaços de Pacto do Bruxo) — usado só pra desenhar a barra de
+   recursos em cima do token, e só aparece se a classe realmente conjura. */
+function recursosMagicos(){
+  const cl = CLASSES[state.classe];
+  if(!cl || !cl.cast) return null;
+  const lvl = state.nivel;
+  if(cl.cast.tipo==='pact'){
+    const p = PACT_SLOTS[lvl];
+    if(!p) return null;
+    return { atual: Math.max(0, p.n-(state.pactUsed||0)), max: p.n };
+  }
+  const table = cl.cast.tipo==='full' ? FULL_SLOTS[lvl] : HALF_SLOTS[lvl];
+  if(!table) return null;
+  let max=0, usados=0;
+  table.forEach((t,i)=>{ max += t; usados += Math.min(t, (state.spellUsed[i+1]||0)); });
+  if(max<=0) return null;
+  return { atual: Math.max(0, max-usados), max };
+}
+
+/* Manda os dados atuais (PV, CA, Iniciativa, Mana) pro token no mapa, pra
+   quem está mestrando ver tudo sem precisar abrir a ficha. */
+function sincronizarStatusNoToken(){
+  if(!itemId || !state.classe || state.pvMax==null) return;
+  try{
+    const final = calcFinal();
+    const ca = 10+mod(final.DES)+(Number(state.caBonus)||0);
+    const recursos = recursosMagicos();
+    sincronizarStatusToken(itemId, {
+      pvAtual: state.pvAtual, pvMax: state.pvMax,
+      ca, iniciativa: mod(final.DES),
+      manaAtual: recursos? recursos.atual : null,
+      manaMax: recursos? recursos.max : null
+    });
+  }catch(e){ /* se a ficha ainda não tiver passo 4 completo, ignora */ }
 }
 async function ligarOwlbear(){
   try{
     const mod = await import("https://esm.sh/@owlbear-rodeo/sdk@3.1.0");
     OBR = mod.default;
+    OBRMOD = mod;
   }catch(e){ render(); return; }
   if(!OBR || !OBR.isAvailable){ render(); return; }
   OBR.onReady(async ()=>{
@@ -428,11 +469,17 @@ function viewFicha(){
     const statMod = a.stat==='Nenhum' ? 0 : mod(final[a.stat]);
     const total = statMod + (Number(a.bonusExtra)||0) + prof;
     const id = 'arma_'+a.id;
-    return `<div class="inv-item"><span>${a.nome} <span class="small">(${a.stat}${a.bonusExtra?', '+fmtMod(Number(a.bonusExtra))+' extra':''})</span></span>
-      <span style="display:flex;align-items:center;gap:6px"><b>${fmtMod(total)}</b>
-        <button class="dice-btn" data-onclick="rollDado(20,${total},'${id}')">🎲</button>
+    const idDano = 'armaDano_'+a.id;
+    const danoEsc = (a.dano||'').replace(/'/g,"\\'");
+    return `<div class="inv-item"><span>${a.nome} <span class="small">(${a.stat}${a.bonusExtra?', '+fmtMod(Number(a.bonusExtra))+' extra':''}${a.dano?', dano '+a.dano:''})</span></span>
+      <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <b>${fmtMod(total)}</b>
+        <button class="dice-btn" data-onclick="rollDado(20,${total},'${id}')" title="Rolar ataque (1d20 + mod + proficiência)">🎲 Atq</button>
         <span class="dice-res" id="${id}"></span>
-        <button data-onclick="removeArma(${a.id})">✕</button></span></div>`;
+        ${a.dano? `<button class="dice-btn" data-onclick="rollArmaDano('${danoEsc}',${statMod},'${idDano}')" title="Rolar dano (dado da arma + modificador)">🎲 Dano</button>
+        <span class="dice-res" id="${idDano}"></span>` : ''}
+        <button data-onclick="removeArma(${a.id})">✕</button>
+      </span></div>`;
   }).join('') || '<p class="small">Nenhuma arma equipada ainda.</p>';
 
   // --- Espaços de magia ---
@@ -530,7 +577,9 @@ function viewFicha(){
         <div class="kv"><span>Pontos de Vida</span><b>
           <input type="number" value="${state.pvAtual}" style="width:50px" data-onchange="state.pvAtual=Number(this.value);render()"> / ${state.pvMax}
         </b></div>
-        <div class="kv"><span>Classe de Armadura (base)</span><b>${10+mod(final.DES)}</b></div>
+        <div class="kv"><span>Classe de Armadura (CA) ${tip('Como isso é calculado?','CA = 10 + modificador de Destreza + o bônus da sua armadura/escudo equipados. Ajuste o bônus ao lado quando trocar de armadura — não tem lista automática de armaduras, é só esse número.')}</span>
+          <b style="display:flex;align-items:center;gap:6px">${10+mod(final.DES)+(Number(state.caBonus)||0)}
+          <input type="number" value="${state.caBonus||0}" title="Bônus de armadura/escudo" style="width:48px" data-onchange="state.caBonus=Number(this.value);render()"></b></div>
         <div class="kv"><span>Deslocamento</span><b>${sp.speed} m</b></div>
         <div class="kv"><span>Iniciativa</span><b style="display:flex;align-items:center;gap:6px">${fmtMod(mod(final.DES))}
           <button class="dice-btn" data-onclick="rollDado(20,${mod(final.DES)},'iniroll')">🎲</button><span class="dice-res" id="iniroll"></span></b></div>
@@ -581,6 +630,7 @@ function viewFicha(){
       <div class="col" style="max-width:110px"><label>Atributo</label>
         <select id="newArmaStat"><option value="FOR">Força</option><option value="DES">Destreza</option><option value="Nenhum">Nenhum</option></select></div>
       <div class="col" style="max-width:90px"><label>Bônus extra</label><input type="number" id="newArmaBonus" value="0"></div>
+      <div class="col" style="max-width:110px"><label>Dado de dano</label><input type="text" id="newArmaDano" placeholder="ex: 1d8"></div>
       <button class="ghost" data-onclick="addArma()">+ Adicionar</button>
     </div>
 
@@ -731,9 +781,35 @@ function addArma(){
   const nome = document.getElementById('newArmaNome').value.trim();
   const stat = document.getElementById('newArmaStat').value;
   const bonusExtra = Number(document.getElementById('newArmaBonus').value)||0;
-  if(nome){ state.armas.push({id:state.nextArmaId++, nome, stat, bonusExtra}); render(); }
+  const dano = document.getElementById('newArmaDano').value.trim();
+  if(nome){ state.armas.push({id:state.nextArmaId++, nome, stat, bonusExtra, dano}); render(); }
 }
 function removeArma(id){ state.armas = state.armas.filter(a=>a.id!==id); render(); }
+
+/* Rola o dado de dano de uma arma (ex: "1d8") somando o modificador de
+   atributo usado no ataque + o bônus extra da arma. Usa parseDado/fmtMod,
+   que já existem em dados.js. */
+function rollArmaDano(diceExpr, statMod, resId){
+  const el = document.getElementById(resId);
+  if(!el) return;
+  const parsed = parseDado(diceExpr);
+  if(!parsed){ el.textContent = diceExpr ? 'Dado inválido — use o formato NdM (ex: 1d8)' : 'Sem dado de dano definido pra essa arma'; return; }
+  let n=0;
+  el.classList.add('rolling');
+  const iv = setInterval(()=>{
+    el.textContent = '🎲 rolando...';
+    n++;
+    if(n>=6){
+      clearInterval(iv);
+      const bonusTotal = parsed.mod + statMod;
+      const rolls=[];
+      let total = bonusTotal;
+      for(let i=0;i<parsed.n;i++){ const r=Math.floor(Math.random()*parsed.sides)+1; rolls.push(r); total+=r; }
+      el.textContent = `🎲 [${rolls.join(', ')}]${bonusTotal? ' '+fmtMod(bonusTotal):''} = ${total}`;
+      el.classList.remove('rolling');
+    }
+  }, 70);
+}
 
 function toggleSlot(circulo,idx){
   const used = state.spellUsed[circulo]||0;

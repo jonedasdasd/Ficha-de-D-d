@@ -2,6 +2,7 @@
 var META_KEY = "com.jonesdnd.ficha/dados";
 var MON_KEY = "com.jonesdnd.ficha/monstros";
 var OBR = null;
+var OBRMOD = null;
 var obrLigado = false;
 var mestre = { personagens:{}, monstros:[] };
 var vinculando = null; // {monId, idx} enquanto espera o clique num token do mapa
@@ -29,6 +30,7 @@ async function ligarOwlbear(){
   try{
     const mod = await import("https://esm.sh/@owlbear-rodeo/sdk@3.1.0");
     OBR = mod.default;
+    OBRMOD = mod;
   }catch(e){ render(); return; }
   if(!OBR || !OBR.isAvailable){ render(); return; }
   OBR.onReady(async ()=>{
@@ -55,16 +57,19 @@ async function ligarOwlbear(){
 
 async function mestreAjustarPV(itemId, delta){
   if(!OBR) return;
+  let novoPv=null, pvMax=null;
   try{
     await OBR.scene.items.updateItems([itemId], (items)=>{
       const it = items[0];
       if(!it || !it.metadata[META_KEY]) return;
       const d = it.metadata[META_KEY];
-      const pvMax = d.pvMax||0;
+      pvMax = d.pvMax||0;
       d.pvAtual = Math.max(0, Math.min(pvMax, (d.pvAtual||0)+delta));
       d._ts = Date.now();
+      novoPv = d.pvAtual;
     });
-  }catch(e){ alert('Não consegui atualizar agora — tente de novo em instantes.'); }
+  }catch(e){ alert('Não consegui atualizar agora — tente de novo em instantes.'); return; }
+  if(novoPv!=null) atualizarApenasPV(itemId, novoPv, pvMax);
 }
 async function mestreDesvincular(itemId){
   if(!OBR) return;
@@ -75,6 +80,7 @@ async function mestreDesvincular(itemId){
       if(it && it.metadata) delete it.metadata[META_KEY];
     });
   }catch(e){}
+  removerStatusToken(itemId);
 }
 async function salvarMonstros(){
   if(!OBR) return;
@@ -92,17 +98,27 @@ function addMonstro(){
   salvarMonstros();
   render();
 }
-function removeMonstro(id){ mestre.monstros = mestre.monstros.filter(m=>m.id!==id); salvarMonstros(); render(); }
+function removeMonstro(id){
+  const m = mestre.monstros.find(m=>m.id===id);
+  if(m) m.membros.forEach(mb=>{ if(mb.tokenId) removerStatusToken(mb.tokenId); });
+  mestre.monstros = mestre.monstros.filter(m=>m.id!==id);
+  salvarMonstros();
+  render();
+}
 function monstroAjustarPV(id, idx, delta){
   const m = mestre.monstros.find(m=>m.id===id); if(!m) return;
   const mb = m.membros[idx]; if(!mb) return;
   mb.pvAtual = Math.max(0, Math.min(mb.pvMax, mb.pvAtual+delta));
   salvarMonstros();
   render();
+  if(mb.tokenId) atualizarApenasPV(mb.tokenId, mb.pvAtual, mb.pvMax);
 }
 function monstroAplicarTodos(id, delta){
   const m = mestre.monstros.find(m=>m.id===id); if(!m) return;
-  m.membros.forEach(mb=>{ mb.pvAtual = Math.max(0, Math.min(mb.pvMax, mb.pvAtual+delta)); });
+  m.membros.forEach(mb=>{
+    mb.pvAtual = Math.max(0, Math.min(mb.pvMax, mb.pvAtual+delta));
+    if(mb.tokenId) atualizarApenasPV(mb.tokenId, mb.pvAtual, mb.pvMax);
+  });
   salvarMonstros();
   render();
 }
@@ -128,6 +144,7 @@ function iniciarVinculo(monId, idx){
           mb.tokenImage = (it.image && it.image.url) || null;
           mb.tokenNome = it.name || null;
           salvarMonstros();
+          sincronizarStatusToken(mb.tokenId, {pvAtual:mb.pvAtual, pvMax:mb.pvMax, ca:null, iniciativa:null, manaMax:null});
         }
       }
     }catch(e){}
@@ -144,6 +161,7 @@ function cancelarVinculo(){
 function desvincularToken(monId, idx){
   const m = mestre.monstros.find(m=>m.id===monId); if(!m) return;
   const mb = m.membros[idx]; if(!mb) return;
+  if(mb.tokenId) removerStatusToken(mb.tokenId);
   delete mb.tokenId; delete mb.tokenImage; delete mb.tokenNome;
   salvarMonstros();
   render();

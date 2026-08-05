@@ -1,36 +1,75 @@
-FICHA DE D&D — EXTENSÃO DO OWLBEAR RODEO (versão corrigida)
+FICHA DE D&D — EXTENSÃO DO OWLBEAR RODEO (v6 — com status no token)
 ================================================================
 
-CORREÇÃO IMPORTANTE (leia antes de subir de novo!)
+NOVIDADES DESTA VERSÃO
+------------------------------------------------------------
+1. STATUS DESENHADO EM CIMA DO TOKEN
+   Toda ficha de Herói (e também os Monstros/NPC) agora ganha, colado em
+   cima do próprio token no mapa: uma barra de vida com o número (PV atual/
+   máximo), um texto com "CA · Iniciativa", e — só se a classe usa magia —
+   uma barrinha azul de recursos/mana (baseada nos espaços de magia que
+   ainda restam). Tudo isso é desenhado automaticamente pela extensão
+   (arquivo novo: token-status.js) e atualiza sozinho quando a ficha, ou o
+   Painel do Mestre, mudam o PV.
+   -> Isso é a parte mais "experimental" da atualização, porque depende de
+      detalhes internos do Owlbear que eu não consigo testar sem uma sala
+      de verdade. Se a barra não aparecer, aparecer torta, ou não acompanhar
+      o token, me manda um print do console (F12 → Console) que eu ajusto.
+
+2. CLASSE DE ARMADURA (CA) EDITÁVEL
+   Na ficha do Herói agora dá pra colocar um "bônus de armadura/escudo" ao
+   lado da CA (que continua sendo 10 + Destreza automaticamente). Ajuste
+   esse número quando trocar de armadura.
+
+3. ROLAGEM DE DANO DAS ARMAS
+   Ao adicionar uma arma equipada, agora também dá pra colocar o dado de
+   dano dela (ex: 1d8). Aparece um botão "🎲 Dano" do lado do botão de
+   ataque, que já soma o modificador de atributo certo.
+
+4. TIPO DO TOKEN: HERÓI OU MONSTRO/NPC (só o Mestre vê a segunda opção)
+   Botão direito num token no mapa agora mostra:
+     🧙 Ficha de Personagem (Herói)   -> pra qualquer jogador ou você
+     🐲 Tipo: Monstro/NPC (Mestre)    -> só aparece pra quem é Mestre na sala
+   A opção de Monstro/NPC abre uma ficha bem simples (nome, PV máximo, dano
+   por ataque) já vinculada àquele token — e ela aparece automaticamente
+   também no Painel do Mestre, na lista de monstros, porque usa o mesmo
+   armazenamento. Arquivos novos: monstro.html e monstro.js.
+
+5. SEM FICHA DUPLICADA
+   Isso já funcionava antes e continua funcionando: cada personagem fica
+   preso a UM token (pelo ID dele). Clicar de novo no mesmo token sempre
+   abre a ficha que já existe, nunca cria outra.
+
+
+CORREÇÃO IMPORTANTE DE VERSÕES ANTERIORES (ainda vale)
 ------------------------------------------------------------
 O Owlbear Rodeo bloqueia scripts JavaScript escritos direto dentro do
-HTML ("inline script"), por segurança. A primeira versão desses
-arquivos tinha o código JS direto dentro do mestre.html, ficha.html e
-background.html, por isso a ficha ficava travada com um ícone de
-"página quebrada".
+HTML ("inline script"), por segurança. Por isso todo o código de cada tela
+fica em arquivos .js separados (mestre.js, ficha.js, background.js,
+monstro.js) — os HTML só carregam esses arquivos com <script src="...">.
 
-Agora o código de cada tela foi movido pra arquivos .js separados:
-- mestre.html      -> usa mestre.js
-- ficha.html       -> usa ficha.js
-- background.html  -> usa background.js
-
-Os arquivos HTML e os .js precisam ficar TODOS juntos, na mesma pasta,
-igual antes.
+Os arquivos HTML e os .js precisam ficar TODOS juntos, na mesma pasta.
 
 
 O QUE É CADA ARQUIVO
 ---------------------
-- manifest.json    -> descreve a extensão pro Owlbear (não edite).
-- background.html / background.js -> roda escondido, coloca o botão
-                       "Ficha de Personagem" no menu do token.
-- dados.js         -> classes, espécies, antecedentes, magias etc.
-- ficha.html / ficha.js -> a ficha de criação/visualização do
-                       personagem. Abre ao clicar num token.
-- mestre.html / mestre.js -> o seu painel (PV do grupo, monstros,
-                       guia rápido). Abre pelo ícone da extensão.
-- icon.svg         -> o ícone da extensão.
+- manifest.json      -> descreve a extensão pro Owlbear (não edite).
+- background.html / background.js -> roda escondido, coloca os itens de
+                         menu no botão direito do token.
+- dados.js           -> classes, espécies, antecedentes, magias, tabelas etc.
+- token-status.js    -> desenha/atualiza a barra de vida, mana, CA e
+                         iniciativa em cima do token (novo).
+- ficha.html / ficha.js -> a ficha de criação/visualização do Herói.
+- monstro.html / monstro.js -> ficha simplificada de Monstro/NPC, vinculada
+                         a um token específico (novo).
+- mestre.html / mestre.js -> o Painel do Mestre (PV do grupo, monstros,
+                         guia rápido).
+- eventos.js         -> faz os botões/campos da tela funcionarem sem usar
+                         onclick="" direto no HTML (bloqueado pelo Owlbear).
+- icon.svg           -> o ícone da extensão.
 
-Os 8 arquivos precisam ficar juntos, na mesma pasta, quando forem
+Ao todo são 12 arquivos agora (3 novos: token-status.js, monstro.html,
+monstro.js) — todos precisam ficar juntos, na mesma pasta, quando forem
 publicados.
 
 
@@ -38,8 +77,8 @@ COMO ATUALIZAR NO GITHUB (você já tem o repositório criado)
 ---------------------------------------------------------------
 1. Entra no seu repositório em github.com (Ficha-de-D-d).
 2. Clica em "Add file" -> "Upload files".
-3. Arrasta os 8 arquivos desta pasta (isso vai SUBSTITUIR os arquivos
-   antigos com o mesmo nome, e ADICIONAR os 3 arquivos .js novos).
+3. Arrasta os 12 arquivos desta pasta (isso vai SUBSTITUIR os arquivos
+   antigos com o mesmo nome, e ADICIONAR os 3 arquivos novos).
 4. Clica em "Commit changes".
 5. Espera 1 a 2 minutos pro GitHub Pages publicar de novo.
 6. No Owlbear, remove a extensão antiga e adiciona de novo colando o
@@ -47,14 +86,20 @@ COMO ATUALIZAR NO GITHUB (você já tem o repositório criado)
 
        https://jonedasdasd.github.io/Ficha-de-D-d/manifest.json
 
-7. Testa clicando no ícone da extensão e no menu do token de novo.
+7. Testa: botão direito num token (deve aparecer "Ficha de Personagem" pra
+   qualquer um, e "Tipo: Monstro/NPC" só se você for o Mestre da sala) e o
+   ícone da extensão no canto (Painel do Mestre).
 
 
 LIMITAÇÕES E OBSERVAÇÕES
 ---------------------------
-- Cada personagem fica preso a UM token. Se o jogador apagar o token
-  dele sem querer, a ficha some junto (use o botão de exportar backup
-  dentro da própria ficha de vez em quando).
+- Cada personagem fica preso a UM token. Se o jogador apagar o token dele
+  sem querer, a ficha some junto (use o botão de exportar backup dentro da
+  própria ficha de vez em quando).
+- A barra/textos em cima do token são desenhados como itens "colados"
+  (attachedTo) no próprio token — se você apagar o token, eles somem
+  junto. Se por algum motivo ficarem "presos" no mapa sem o token, é só
+  selecionar e apagar manualmente.
 - Se depois de reenviar ainda aparecer erro, abre o DevTools (F12) no
-  Owlbear, aba Console, tenta abrir a ficha de novo, e me manda um
-  print da mensagem em vermelho que aparecer — ajusto rapidinho.
+  Owlbear, aba Console, tenta abrir a ficha de novo, e me manda um print
+  da mensagem em vermelho que aparecer — ajusto rapidinho.

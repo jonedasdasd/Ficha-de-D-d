@@ -23,16 +23,17 @@
     return;
   }
 
+  // Jogadores só podem criar/gerenciar Heróis (ficha de personagem comum).
+  // O Mestre ganha, além disso, uma opção pra marcar qualquer token como
+  // Monstro/NPC, com uma ficha simplificada (só vida e dano de ataque).
   let jaRegistrado = false;
-  function registrarMenu() {
-    if (jaRegistrado) return;
-    jaRegistrado = true;
+  function registrarMenuHeroi() {
     OBR.contextMenu.create({
       id: "com.jonesdnd.ficha/menu-ficha",
       icons: [
         {
           icon: BASE + "icon.svg",
-          label: "🧙 Ficha de Personagem",
+          label: "🧙 Ficha de Personagem (Herói)",
           filter: { max: 1 }
         }
       ],
@@ -47,6 +48,37 @@
         });
       }
     });
+  }
+  function registrarMenuMonstro() {
+    OBR.contextMenu.create({
+      id: "com.jonesdnd.ficha/menu-monstro",
+      icons: [
+        {
+          icon: BASE + "icon.svg",
+          label: "🐲 Tipo: Monstro/NPC (Mestre)",
+          filter: { max: 1 }
+        }
+      ],
+      onClick(context, elementId) {
+        const id = context.items[0].id;
+        OBR.popover.open({
+          id: "com.jonesdnd.ficha/popover-monstro",
+          url: BASE + "monstro.html?item=" + encodeURIComponent(id),
+          width: 420,
+          height: 480,
+          anchorElementId: elementId
+        });
+      }
+    });
+  }
+  async function registrarMenu() {
+    if (jaRegistrado) return;
+    jaRegistrado = true;
+    registrarMenuHeroi();
+    try {
+      const papel = await OBR.player.getRole();
+      if (papel === "GM") registrarMenuMonstro();
+    } catch (e) { /* se nao der pra checar o papel, so o menu de Heroi aparece */ }
   }
 
   if (OBR.isReady) {
