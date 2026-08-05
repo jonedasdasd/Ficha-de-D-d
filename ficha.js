@@ -72,12 +72,12 @@ async function carregarDoItem(){
   render();
 }
 function agendarSalvar(){
-  if(!itemId || !OBR) return;
+  if(!itemId || !OBR || !obrLigado) return;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(salvarNoItem, 600);
 }
 async function salvarNoItem(){
-  if(!itemId || !OBR) return;
+  if(!itemId || !OBR || !obrLigado) return;
   state._ts = Date.now();
   const snapshot = JSON.parse(JSON.stringify(state));
   try{
@@ -111,7 +111,7 @@ function recursosMagicos(){
 /* Manda os dados atuais (PV, CA, Iniciativa, Mana) pro token no mapa, pra
    quem está mestrando ver tudo sem precisar abrir a ficha. */
 function sincronizarStatusNoToken(){
-  if(!itemId || !state.classe || state.pvMax==null) return;
+  if(!itemId || !obrLigado || !state.classe || state.pvMax==null) return;
   try{
     const final = calcFinal();
     const ca = 10+mod(final.DES)+(Number(state.caBonus)||0);

@@ -56,7 +56,7 @@ async function ligarOwlbear(){
 }
 
 async function mestreAjustarPV(itemId, delta){
-  if(!OBR) return;
+  if(!OBR || !obrLigado) return;
   let novoPv=null, pvMax=null;
   try{
     await OBR.scene.items.updateItems([itemId], (items)=>{
@@ -72,7 +72,7 @@ async function mestreAjustarPV(itemId, delta){
   if(novoPv!=null) atualizarApenasPV(itemId, novoPv, pvMax);
 }
 async function mestreDesvincular(itemId){
-  if(!OBR) return;
+  if(!OBR || !obrLigado) return;
   if(!confirm('Isso remove a ficha desse token (o jogador pode criar de novo depois). Continuar?')) return;
   try{
     await OBR.scene.items.updateItems([itemId], (items)=>{
@@ -83,7 +83,7 @@ async function mestreDesvincular(itemId){
   removerStatusToken(itemId);
 }
 async function salvarMonstros(){
-  if(!OBR) return;
+  if(!OBR || !obrLigado) return;
   try{ await OBR.scene.setMetadata({ [MON_KEY]: mestre.monstros }); }catch(e){}
 }
 function addMonstro(){

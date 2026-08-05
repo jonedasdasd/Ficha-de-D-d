@@ -71,6 +71,7 @@ async function _construirPilhaStatus(itemId, info, dpi, cx, topoY, largura, altu
    de PV, "CA · Iniciativa" e barra de mana (só se info.manaMax vier preenchido). */
 async function sincronizarStatusToken(itemId, info){
   if(!itemId || !OBR || !OBRMOD) return;
+  if(typeof obrLigado!=='undefined' && !obrLigado) return; // sala ainda conectando, tenta na próxima mudança
   try{
     const dpi = await OBR.scene.grid.getDpi();
     const items = await OBR.scene.items.getItems([itemId]);
@@ -150,6 +151,7 @@ async function sincronizarStatusToken(itemId, info){
    criada na próxima vez que a ficha do jogador salvar sozinha. */
 async function atualizarApenasPV(itemId, pvAtual, pvMax){
   if(!itemId || !OBR) return;
+  if(typeof obrLigado!=='undefined' && !obrLigado) return; // sala ainda conectando, tenta na próxima mudança
   try{
     const items = await OBR.scene.items.getItems([itemId]);
     const token = items[0];
