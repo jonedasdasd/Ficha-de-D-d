@@ -67,8 +67,12 @@ async function carregarDoItem(){
       Object.assign(state, saved);
       if(state.classe && state.especie && state.antecedente) state.step = 5;
     }
-  }catch(e){ /* token pode ter sido removido do mapa */ }
-  obrLigado = true;
+    // Só marcar como ligado se a leitura do item tiver sucesso
+    obrLigado = true;
+  }catch(e){
+    console.error('Ficha: erro ao carregar dados do item', e);
+    obrLigado = false;
+  }
   render();
 }
 function agendarSalvar(){
@@ -84,7 +88,12 @@ async function salvarNoItem(){
     await OBR.scene.items.updateItems([itemId], (items)=>{
       for(const it of items) it.metadata[META_KEY] = snapshot;
     });
-  }catch(e){ /* rede momentânea — próxima alteração tenta salvar de novo */ }
+  }catch(e){
+    console.error('Ficha: erro ao salvarNoItem', e);
+    const el = document.getElementById('obrStatus');
+    if(el) el.innerHTML = '⚠️ Erro ao salvar a ficha — verifique o console do navegador.';
+    return;
+  }
   sincronizarStatusNoToken();
 }
 
@@ -556,7 +565,8 @@ function viewFicha(){
         <div class="small">Bônus de Proficiência</div>
         <div style="font-size:22px;color:var(--accent2)">${fmtMod(prof)}</div>
         <button class="ghost" data-onclick="toggleGlossario()" style="margin-top:6px">📖 Glossário</button>
-        <button class="ghost" data-onclick="exportFicha()" style="margin-top:6px">💾 Exportar como backup</button>
+          <button class="ghost" data-onclick="exportFicha()" style="margin-top:6px">💾 Exportar como backup</button>
+          <button class="ghost" data-onclick="salvarNoItem()" style="margin-top:6px">💾 Salvar agora</button>
       </div>
     </div>
     <p class="small" style="margin-top:-6px">Exportar é só um backup local — a ficha já salva e sincroniza sozinha pelo token do Owlbear (veja o aviso no topo da página).</p>
