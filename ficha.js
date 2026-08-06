@@ -176,8 +176,10 @@ async function ligarOwlbear(){
     OBR = mod.default;
     OBRMOD = mod;
   }catch(e){ render(); return; }
-  if(!OBR || !OBR.isAvailable){ render(); return; }
-  OBR.onReady(async ()=>{
+  if(!OBR){ render(); return; }
+  // Registra o handler onReady sempre — se o SDK já estiver disponível, também
+  // executamos a inicialização imediatamente.
+  const _onReadyInit = async ()=>{
     await carregarDoItem();
     OBR.scene.items.onChange(async (items)=>{
       if(!itemId) return;
@@ -192,7 +194,9 @@ async function ligarOwlbear(){
         }
       }
     });
-  });
+  };
+  try{ OBR.onReady(_onReadyInit); }catch(e){ /* continue */ }
+  if(OBR.isAvailable){ _onReadyInit().catch(()=>{}); }
 }
 
 /* ============================= RENDER ============================= */

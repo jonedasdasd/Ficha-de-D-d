@@ -33,26 +33,17 @@ async function ligarOwlbear(){
     OBRMOD = mod;
   }catch(e){ render(); return; }
   if(!OBR || !OBR.isAvailable){ render(); return; }
-  OBR.onReady(async ()=>{
+  if(!OBR){ render(); return; }
+  const _init = async ()=>{
     obrLigado = true;
-    try{
-      const items = await OBR.scene.items.getItems((it)=> it.metadata && it.metadata[META_KEY]);
-      mestre.personagens = personagensDeItems(items);
-    }catch(e){}
-    try{
-      const meta = await OBR.scene.getMetadata();
-      mestre.monstros = (meta && meta[MON_KEY]) || [];
-    }catch(e){}
+    try{ const items = await OBR.scene.items.getItems((it)=> it.metadata && it.metadata[META_KEY]); mestre.personagens = personagensDeItems(items); }catch(e){}
+    try{ const meta = await OBR.scene.getMetadata(); mestre.monstros = (meta && meta[MON_KEY]) || []; }catch(e){}
     render();
-    OBR.scene.items.onChange((items)=>{
-      mestre.personagens = personagensDeItems(items);
-      render();
-    });
-    OBR.scene.onMetadataChange((meta)=>{
-      mestre.monstros = (meta && meta[MON_KEY]) || [];
-      render();
-    });
-  });
+    OBR.scene.items.onChange((items)=>{ mestre.personagens = personagensDeItems(items); render(); });
+    OBR.scene.onMetadataChange((meta)=>{ mestre.monstros = (meta && meta[MON_KEY]) || []; render(); });
+  };
+  try{ OBR.onReady(_init); }catch(e){}
+  if(OBR.isAvailable) _init().catch(()=>{});
 }
 
 async function mestreAjustarPV(itemId, delta){
