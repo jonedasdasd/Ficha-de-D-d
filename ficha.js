@@ -13,6 +13,18 @@ function _itemKey(){ return META_KEY+':item'; }
 function loadSavedItemId(){ try{ const id = localStorage.getItem(_itemKey()); return id ? id : null;}catch(e){return null;} }
 if(!itemId){ itemId = loadSavedItemId(); }
 
+async function esperarOBRPronto(timeoutMs=5000){
+  if(!OBR) return false;
+  if(OBR.isAvailable) return true;
+  return new Promise(resolve=>{
+    let fechado=false;
+    const timer = setTimeout(()=>{ if(fechado) return; fechado=true; resolve(false); }, timeoutMs);
+    try{
+      OBR.onReady(()=>{ if(fechado) return; fechado=true; clearTimeout(timer); resolve(true); });
+    }catch(e){ if(fechado) return; fechado=true; clearTimeout(timer); resolve(false); }
+  });
+}
+
 /* ============================= ESTADO ============================= */
 var state = {
   step:1,
@@ -67,6 +79,12 @@ function renderObrStatus(){
 }
 async function carregarDoItem(){
   if(!itemId || !OBR) return;
+  const pronto = await esperarOBRPronto(3000);
+  if(!pronto){
+    console.warn('Ficha: SDK não estava pronto para carregar o item, tentando de novo em breve.');
+    setTimeout(carregarDoItem, 800);
+    return;
+  }
   try{
     const items = await OBR.scene.items.getItems([itemId]);
     const item = items[0];
@@ -117,11 +135,26 @@ function loadLocalBackup(){
 }
 function clearLocalBackup(){ try{ localStorage.removeItem(_backupKey()); }catch(e){} }
 async function salvarNoItem(){
-  // se não tem item ligado, guarda só no backup local para não perder.
-  if(!itemId || !OBR || !obrLigado){
+  if(!itemId || !OBR){
     saveLocalBackup();
     const el = document.getElementById('obrStatus');
     if(el) el.innerHTML = '⚠️ Ficha não ligada ao token ou SDK indisponível — salvo localmente.';
+    return;
+  }
+  const pronto = await esperarOBRPronto(3000);
+  if(!pronto || !OBR.isAvailable){
+    saveLocalBackup();
+    const el = document.getElementById('obrStatus');
+    if(el) el.innerHTML = '⚠️ Ainda conectando ao Owlbear — salvo localmente. Abra a ficha novamente em alguns segundos.';
+    return;
+  }
+  if(!obrLigado){
+    await carregarDoItem();
+  }
+  if(!itemId || !OBR || !obrLigado){
+    saveLocalBackup();
+    const el = document.getElementById('obrStatus');
+    if(el) el.innerHTML = '⚠️ Ficha não ligada ao token — salvo localmente.';
     return;
   }
   state._ts = Date.now();
@@ -190,7 +223,29 @@ async function ligarOwlbear(){
   // executamos a inicialização imediatamente.
   const _onReadyInit = async ()=>{
     await carregarDoItem();
-    OBR.scene.items.onChange(async (items)=>{
+    try{
+      OBR.scene.items.onChange(async (items)=>{
+        if(!itemId) return;
+        const it = items.find(i=>i.id===itemId);
+        if(it && it.metadata && it.metadata[META_KEY]){
+          const incoming = it.metadata[META_KEY];
+          if(incoming._ts && incoming._ts > (state._ts||0)){
+            state.pvAtual = incoming.pvAtual;
+            state.condicoes = incoming.condicoes || state.condicoes;
+            state._ts = incoming._ts;
+            render();
+          }
+        }
+      });
+    }catch(e){ console.warn('Ficha: não consegui registrar onChange de itens do Owlbear.', e); }
+  };
+  let readyCalled = false;
+  try{ OBR.onReady(async ()=>{ if(readyCalled) return; readyCalled=true; await _onReadyInit(); }); }catch(e){ /* continue */ }
+  if(OBR.isAvailable){ readyCalled=true; _onReadyInit().catch(()=>{}); }
+  else {
+    setTimeout(()=>{ if(!readyCalled && OBR.isAvailable){ readyCalled=true; _onReadyInit().catch(()=>{}); } }, 1000);
+  }
+}
       if(!itemId) return;
       const it = items.find(i=>i.id===itemId);
       if(it && it.metadata && it.metadata[META_KEY]){
@@ -208,13 +263,52 @@ async function ligarOwlbear(){
   if(OBR.isAvailable){ _onReadyInit().catch(()=>{}); }
 }
 
-function iniciarVinculoToken(){
+async function iniciarVinculoToken(){
   if(!OBR){ alert('Ainda conectando ao Owlbear... tente de novo em alguns segundos.'); return; }
-  if(!OBR.isAvailable){ alert('SDK do Owlbear ainda não está pronto. Aguarde e tente novamente.'); return; }
+  const pronto = await esperarOBRPronto(3000);
+  if(!pronto){ alert('SDK do Owlbear ainda não está pronto. Aguarde e tente novamente.'); return; }
+  if(!OBR.player || typeof OBR.player.onChange !== 'function'){
+    alert('O Owlbear ainda não liberou a seleção de tokens. Tente de novo em alguns instantes.');
+    setTimeout(iniciarVinculoToken, 800);
+    return;
+  }
   vinculandoToken = true;
   if(pararDeEscutarToken){ pararDeEscutarToken(); pararDeEscutarToken=null; }
-  pararDeEscutarToken = OBR.player.onChange(async (player)=>{
-    if(!vinculandoToken) return;
+  try{
+    pararDeEscutarToken = OBR.player.onChange(async (player)=>{
+      if(!vinculandoToken) return;
+      const sel = player && player.selection;
+      if(!sel || !sel.length) return;
+      const alvoId = sel[0];
+      try{
+        const items = await OBR.scene.items.getItems([alvoId]);
+        const item = items[0];
+        if(item){
+          itemId = alvoId;
+          if(!item.metadata) item.metadata = {};
+          if(!item.metadata[META_KEY]){
+            const backup = loadLocalBackup();
+            if(backup){ Object.assign(state, backup); }
+          }
+          await carregarDoItem();
+          if(obrLigado){
+            const el = document.getElementById('obrStatus');
+            if(el) el.innerHTML = '🔗 Token vinculado! Agora sua ficha salva no token.';
+          }
+        }
+      }catch(e){ console.error('Ficha: erro ao vincular token', e); }
+      vinculandoToken = false;
+      if(pararDeEscutarToken){ pararDeEscutarToken(); pararDeEscutarToken = null; }
+      render();
+    });
+  }catch(e){
+    console.warn('Ficha: não foi possível registrar player.onChange ainda, tentando novamente...', e);
+    vinculandoToken = false;
+    setTimeout(iniciarVinculoToken, 800);
+    return;
+  }
+  render();
+}
     const sel = player && player.selection;
     if(!sel || !sel.length) return;
     const alvoId = sel[0];
