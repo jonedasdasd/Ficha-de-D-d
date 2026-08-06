@@ -6,6 +6,12 @@ var OBR = null;
 var OBRMOD = null;
 var obrLigado = false;
 var saveTimer = null;
+var vinculandoToken = false;
+var pararDeEscutarToken = null;
+
+function _itemKey(){ return META_KEY+':item'; }
+function loadSavedItemId(){ try{ const id = localStorage.getItem(_itemKey()); return id ? id : null;}catch(e){return null;} }
+if(!itemId){ itemId = loadSavedItemId(); }
 
 /* ============================= ESTADO ============================= */
 var state = {
@@ -49,8 +55,10 @@ function goStep(s){ state.step=s; render(); }
 function renderObrStatus(){
   const el = document.getElementById('obrStatus');
   if(!el) return;
-  if(!itemId){
-    el.innerHTML = `⚠️ Esta ficha não está ligada a nenhum token. Pra ela salvar e aparecer pro mestre, selecione seu token no mapa do Owlbear e abra a ficha pelo menu dele (clique direito no token → 🧙 Ficha de Personagem).`;
+  if(vinculandoToken){
+    el.innerHTML = `🔎 Seleção de token ativa — clique em um token no mapa para vincular esta ficha.`;
+  } else if(!itemId){
+    el.innerHTML = `⚠️ Esta ficha não está ligada a nenhum token. Use o botão de linkar token no fim da ficha para escolher um token no mapa.`;
   } else if(!obrLigado){
     el.innerHTML = `🔄 Conectando ao token...`;
   } else {
@@ -97,6 +105,7 @@ function saveLocalBackup(){
   try{
     const snapshot = JSON.stringify(state);
     localStorage.setItem(_backupKey(), snapshot);
+    if(itemId){ localStorage.setItem(_itemKey(), itemId); }
   }catch(e){ /* nada a fazer */ }
 }
 function loadLocalBackup(){
@@ -197,6 +206,45 @@ async function ligarOwlbear(){
   };
   try{ OBR.onReady(_onReadyInit); }catch(e){ /* continue */ }
   if(OBR.isAvailable){ _onReadyInit().catch(()=>{}); }
+}
+
+function iniciarVinculoToken(){
+  if(!OBR){ alert('Ainda conectando ao Owlbear... tente de novo em alguns segundos.'); return; }
+  if(!OBR.isAvailable){ alert('SDK do Owlbear ainda não está pronto. Aguarde e tente novamente.'); return; }
+  vinculandoToken = true;
+  if(pararDeEscutarToken){ pararDeEscutarToken(); pararDeEscutarToken=null; }
+  pararDeEscutarToken = OBR.player.onChange(async (player)=>{
+    if(!vinculandoToken) return;
+    const sel = player && player.selection;
+    if(!sel || !sel.length) return;
+    const alvoId = sel[0];
+    try{
+      const items = await OBR.scene.items.getItems([alvoId]);
+      const item = items[0];
+      if(item){
+        itemId = alvoId;
+        if(!item.metadata) item.metadata = {};
+        if(!item.metadata[META_KEY]){
+          const backup = loadLocalBackup();
+          if(backup){ Object.assign(state, backup); }
+        }
+        await carregarDoItem();
+        if(obrLigado){
+          const el = document.getElementById('obrStatus');
+          if(el) el.innerHTML = '🔗 Token vinculado! Agora sua ficha salva no token.';
+        }
+      }
+    }catch(e){ console.error('Ficha: erro ao vincular token', e); }
+    vinculandoToken = false;
+    if(pararDeEscutarToken){ pararDeEscutarToken(); pararDeEscutarToken = null; }
+    render();
+  });
+  render();
+}
+function cancelarVinculoToken(){
+  vinculandoToken = false;
+  if(pararDeEscutarToken){ pararDeEscutarToken(); pararDeEscutarToken = null; }
+  render();
 }
 
 /* ============================= RENDER ============================= */
@@ -706,6 +754,15 @@ function viewFicha(){
 
     <h3>Anotações</h3>
     <textarea placeholder="Anote decisões, itens usados fora do inventário, XP ganho em sessão, etc." data-oninput="state.anotacoes=this.value">${state.anotacoes}</textarea>
+    <div class="panel" style="margin-top:14px;background:rgba(255,255,255,0.04);border-color:var(--accent2);">
+      <h3>Vincular token</h3>
+      <p class="small">Se a ficha não estiver associada corretamente ao token, use este botão para escolher o token no mapa e conectar a ficha.</p>
+      <div class="row" style="align-items:center;gap:10px;flex-wrap:wrap">
+        <button class="ghost" data-onclick="iniciarVinculoToken()">🔗 Linkar token</button>
+        ${vinculandoToken ? `<button class="ghost" data-onclick="cancelarVinculoToken()">Cancelar</button>` : ''}
+        <span class="small">${vinculandoToken ? 'Selecione um token no mapa para vincular esta ficha.' : 'Token atual: ' + (itemId || 'nenhum')} </span>
+      </div>
+    </div>
   </div>
   <div class="nav"><button class="ghost" data-onclick="goStep(4)">← Voltar</button><span></span></div>
   ${renderGlossarioModal()}`;
